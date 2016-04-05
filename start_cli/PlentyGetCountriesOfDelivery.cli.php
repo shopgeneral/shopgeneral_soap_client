@@ -12,8 +12,8 @@
  */
 
 require_once realpath(dirname(__FILE__).'/../').'/config/basic.inc.php';
-require_once ROOT.'examples/GetItemsBase/SoapCall_GetItems.class.php';
+require_once ROOT.'examples/GetCountriesOfDelivery/SoapCall_GetCountriesOfDelivery.class.php';
 
-SoapCall_GetItems::getInstance()->execute();
+SoapCall_GetCountriesOfDelivery::getInstance()->execute();
 
 ?>
