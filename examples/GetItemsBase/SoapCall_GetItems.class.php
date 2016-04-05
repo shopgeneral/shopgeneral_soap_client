@@ -59,7 +59,7 @@ class SoapCall_GetItems extends PlentySoapCall
 		if(is_array($response->ItemsBase->item))
 		{
 			/*
-			* If more than one country of delivery
+			* If more than one country of delivery s
 			*/
 			foreach ($response->ItemsBase->item as $itemsBase)
 			{
