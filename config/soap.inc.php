@@ -20,7 +20,7 @@ define('SOAP_USER', 'plenty_jipi');
  * 
  * please enter your own password
  */
-define('SOAP_PASSWORD', 'Babakush17');
+define('SOAP_PASSWORD', '');
 
 
 /*
