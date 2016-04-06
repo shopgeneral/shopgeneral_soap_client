@@ -15,6 +15,14 @@ DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_unicode_ci;
 
 /**
+ * used by SoapCall_GetItems.class.php
+ */
+CREATE TABLE `soap_db`.`plenty_last_items_update` (
+  `last_update` int(11) DEFAULT NULL,
+  PRIMARY KEY (`soap_token_user`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+/**
  * used by Adapter_GetCountriesOfDelivery.class.php
  */
 CREATE TABLE `soap_db`.`plenty_countries_of_delivery` (
