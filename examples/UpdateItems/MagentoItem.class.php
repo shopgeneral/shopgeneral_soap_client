@@ -4,17 +4,15 @@ require_once ROOT.'lib/soap/client/MagentoSoapClient.php';
 
 class MagentoItem {
 	
-	private static $instance = null;
-	private static $session = null;
-	private static $client = null;
-	
-	private $typeOfProduct = 'simple';
+	private $typeOfProduct = 'simple';#ProduktTyp
 	private $sku = null;#ArtikelNr.
 	private $name = null;#Name 1
 	private $description = null;#Artikeltext
 	private $short_description = null;#Meta-Beschreibung
 	private $weight = null;#Gewicht (Brutto)
 	private $status = null; #Inaktiv
+	private $url_key = null; #Inaktiv
+	private $visibility = 4;#0= Einzeln nicht Sichtbare 1=Katalog 2= Suche 3=
 	private $price = null; #Preis
 	private $special_price = null; #Preis1
 	private $tax_class_id = null; #0=keine 1=Vollbesteuert (19%) 2=Teilbesteuert (7%)
@@ -24,26 +22,11 @@ class MagentoItem {
 
 	public function __construct()
 	{
-		MagentoSoapClient::getInstance()->doAuthentification();
-		self::$session = MagentoSoapClient::getInstance()->getSession();
-		self::$client = MagentoSoapClient::getInstance()->getSoapClient();
-	}
-	
-	public static function getInstance()
-	{
-		if( !isset(self::$instance) || !(self::$instance instanceof MagentoItem) )
-		{
-			self::$instance = new MagentoItem();
-		}
-	
-		return self::$instance;
-	}
-	
-	private function getProductCreateEntityArray($type){
 		
-		$attributeSets = self::$client->call(self::$session, 'product_attribute_set.list');
-		$attributeSet = current($attributeSets);
-
+	}
+	
+	public function getProductCreateEntityArray($type, $attributeSet){
+		
 		$catalogProductCreateEntityArray = null;
 		
 		$productData = 	array(
@@ -54,8 +37,8 @@ class MagentoItem {
 							'short_description' => $this->short_description,
 							'weight' => $this->weight,
 							'status' => $this->status,
-							'url_key' => 'product-url-key',
-							'url_path' => 'product-url-path',
+							'url_key' => $this->url_key,
+							'url_path' => 'url_path',
 							'visibility' => $this->visibility,
 							'price' => $this->price,
 							'special_price' => $this->special_price,
@@ -75,20 +58,6 @@ class MagentoItem {
 			}
 			
 		return $catalogProductCreateEntityArray;
-	}
-		
-	public function getSoapCallResult()
-	{
-		try{
-			$result = self::$client->call(self::$session, 'catalog_product.create', $this->getProductCreateEntityArray("neu"));
-			
-		} catch(Exception $e)
-		{
-			if($e->getMessage() === "Der Wert des Attributs \"SKU\" muss einmalig sein."){
-				$result = self::$client->call(self::$session, 'catalog_product.update', $this->getProductCreateEntityArray("update"));
-			}
-		}
-		
 	}
 	
 	public function setSKU($plenty_sku){
@@ -113,6 +82,10 @@ class MagentoItem {
 	
 	public function setStatus($plenty_status){
 		$this->status = $plenty_status;
+	}
+	
+	public function setUrlKey($url_key){
+		$this->url_key = $url_key;
 	}
 	
 	public function setPrice($plenty_price){
