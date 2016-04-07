@@ -151,7 +151,13 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		}
 		$item->setUrlKey($itemTexts->ItemTexts->item[0]->UrlContent);
 		$item->setPrice($itemBase->PriceSet->Price);
-		$item->setSpecialPrice($itemBase->PriceSet->Price1);
+		
+		if($itemBase->PriceSet->Price1 == 0){
+			$item->setSpecialPrice($itemBase->PriceSet->Price);
+		}else {
+			$item->setSpecialPrice($itemBase->PriceSet->Price1);
+		}
+		
 		if($itemBase->PriceSet->VAT == 7){
 			$item->setTaxClassId(2);
 		} elseif ($itemBase->PriceSet->VAT == 19){
@@ -159,29 +165,13 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		}else {
 			$item->setTaxClassId(0);
 		}
+		
 		$item->setMetaTitle($itemBase->Texts->Name);
 		$item->setMetaKeyword($itemBase->Texts->Keywords);
 		$item->setMetaDescription($itemTexts->ItemTexts->item[0]->MetaDescription);
 	
 		return $item;
-		
-		// 		$imageItem = $this->getImages();
-		
-		// 		$imgData = $this->getImgUrlToBase64($imageItem->ItemsImages->item[0]->ImageURL);
-		
-		// 		$file = array(
-		// 				'content' => $imgData,
-		// 				'mime' => 'image/jpeg'
-		// 		);
-		
-		// 		$result = self::$magentoClient->call(
-		// 				self::$magentoSession,
-		// 				'catalog_product_attribute_media.create',
-		// 				array(
-		// 						$itemBase->ItemNo,
-		// 						array('file'=>$file, 'label'=>'test', 'position'=>'100', 'types'=>array('thumbnail'), 'exclude'=>0)
-		// 				)
-		// 		);
+
 	}
 	
 	private function checkLastUpdate(){
@@ -198,20 +188,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 	}
 	
 	
-// 	private function getImages(){
-// 		$oPlentySoapRequest_GetItemsImages = new PlentySoapRequest_GetItemsImages();
-// 		$oPlentySoapRequest_GetItemsImages->LastUpdateFrom = $this->lastUpdateFrom;
-// 		$oPlentySoapRequest_GetItemsImages->LastUpdateTo = time();
-// 		$response =	$this->getPlentySoap()->GetItemsImages($oPlentySoapRequest_GetItemsImages);
-// 		return $response;
-// 	}
-	
-// 	public function getImgUrlToBase64($imgUrl){
-// 		$image = file_get_contents($imgUrl);
-// 		if ($image !== false){
-// 			return base64_encode($image);
-// 		}
-// 	}
+
 }
 
 ?>
