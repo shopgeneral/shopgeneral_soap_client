@@ -25,7 +25,6 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		{
 			self::$instance = new SoapCall_UpdateItems();
 		}
-	
 		return self::$instance;
 	}
 	

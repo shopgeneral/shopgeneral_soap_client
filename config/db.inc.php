@@ -1,6 +1,6 @@
 <?php
 
-define('SQL_DATA_SOURCE', 'db4free.net');
+define('SQL_DATA_SOURCE', 'vps266804.ovh.net');
 
 /*
  * enter the name of the database
@@ -17,7 +17,7 @@ define('SQL_USERNAME', 'shopgeneral');
  * 
  * please use a (more) secure password
  */
-define('SQL_PASSWORD', '#47-roteBarretts');
+define('SQL_PASSWORD', 'cKwsuHeLyJt7yRqP');
 
 /*
  * database port (default: 3306)
