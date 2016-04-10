@@ -141,7 +141,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		$item->setSKU($itemBase->ItemNo);
 		$item->setName($itemBase->Texts->Name);
 		$item->setDescription($itemTexts->ItemTexts->item[0]->LongDescription);
-		$item->setShortDescription($itemTexts->ItemTexts->item[0]->ShortDescription);
+		$item->setShortDescription($itemTexts->ItemTexts->item[0]->MetaDescription); //$itemTexts->ItemTexts->item[0]->ShortDescription
 		$item->setWeight($itemBase->PriceSet->WeightInGramm);
 		if($itemBase->Availability->Inactive === 0){
 			$item->setStatus(1);
@@ -168,7 +168,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		$item->setMetaTitle($itemBase->Texts->Name);
 		$item->setMetaKeyword($itemBase->Texts->Keywords);
 		$item->setMetaDescription($itemTexts->ItemTexts->item[0]->MetaDescription);
-	
+		
 		return $item;
 
 	}

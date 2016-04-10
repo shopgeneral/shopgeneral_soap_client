@@ -30,7 +30,7 @@ class MagentoItem {
 		$catalogProductCreateEntityArray = null;
 		
 		$productData = 	array(
-							'categories' => array(2),
+							'categories' => array(3),
 							'websites' => array(1),
 							'name' => $this->name,
 							'description' => $this->description,

@@ -73,7 +73,9 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 							'label' => 'PlentyMarket Image',
 							'position' => '100',
 							'types' => array (
-									'thumbnail'
+									'thumbnail',
+									'small_image',
+									'image'
 							),
 							'exclude' => 0
 					)
