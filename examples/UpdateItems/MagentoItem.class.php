@@ -7,6 +7,7 @@ class MagentoItem {
 	private $typeOfProduct = 'simple';#ProduktTyp
 	private $sku = null;#ArtikelNr.
 	private $name = null;#Name 1
+	private $categories = null;
 	private $description = null;#Artikeltext
 	private $short_description = null;#Meta-Beschreibung
 	private $weight = null;#Gewicht (Brutto)
@@ -30,7 +31,7 @@ class MagentoItem {
 		$catalogProductCreateEntityArray = null;
 		
 		$productData = 	array(
-							'categories' => array(3),
+							'categories' => $this->categories,
 							'websites' => array(1),
 							'name' => $this->name,
 							'description' => $this->description,
@@ -110,6 +111,11 @@ class MagentoItem {
 	
 	public function setMetaDescription($plenty_meta_description){
 		$this->meta_description = $plenty_meta_description;
+	}
+	
+	public function setCategory($magento_category_id){
+		var_dump($magento_category_id);
+		$this->categories = $magento_category_id;
 	}
 	
 }

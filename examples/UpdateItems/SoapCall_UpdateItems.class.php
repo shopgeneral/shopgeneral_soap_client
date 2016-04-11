@@ -82,7 +82,15 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			{
 				$this->getLogger()->info(__FUNCTION__.'::  Starte Update for'.' ItemID: '.$itemBase->ItemID);
 				$magentoItem = $this->convertToMagentoItem($itemBase);
-				$this->pushItemToMagento($magentoItem);
+				$magentoItemID = $this->pushItemToMagento($magentoItem);
+				if($magentoItemID != 1 && $magentoItemID != 0){
+					$this->getLogger()->info(__FUNCTION__.':: Add Item to mapping Table: '.$itemBase->ItemID.' :: '.$magentoItemID);
+					$this->addDBMapping($itemBase->ItemID, $magentoItemID);
+				}else {
+					if($magentoItemID == 1)
+					$this->getLogger()->info(__FUNCTION__.':: Item Updated: ');
+				}
+				exit;
 			}
 		}
 	}
@@ -100,6 +108,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		$oPlentySoapRequest_GetItemsBase->LastUpdateFrom = $this->lastUpdateFrom;
 		$oPlentySoapRequest_GetItemsBase->LastUpdateTill = $lastUpdateTill;
 		$oPlentySoapRequest_GetItemsBase->Page = $page;
+		$oPlentySoapRequest_GetItemsBase->GetCategories = true;
 		$response = $this->getPlentySoap()->GetItemsBase($oPlentySoapRequest_GetItemsBase);
 		return $response;
 	}
@@ -131,15 +140,18 @@ class SoapCall_UpdateItems extends PlentySoapCall
 				$result = self::$magentoClient->call(self::$magentoSession, 'catalog_product.update', $magentoItem->getProductCreateEntityArray("update", $attributeSet));
 			}
 		}
+		return $result;
 	}
 	
 	private function convertToMagentoItem($itemBase){
 		
 		$itemTexts = $this->getItemTexts($itemBase->ItemID);
-
+		$magento_category_id = $this->getMagentoCategoryID($itemBase->Categories->item[0]->ItemCategoryID);
+		
 		$item = new MagentoItem();
 		$item->setSKU($itemBase->ItemNo);
-		$item->setName($itemBase->Texts->Name);
+		$item->setName($itemTexts->ItemTexts->item[0]->Name);
+		$item->setCategory($magento_category_id);
 		$item->setDescription($itemTexts->ItemTexts->item[0]->LongDescription);
 		$item->setShortDescription($itemTexts->ItemTexts->item[0]->MetaDescription); //$itemTexts->ItemTexts->item[0]->ShortDescription
 		$item->setWeight($itemBase->PriceSet->WeightInGramm);
@@ -170,7 +182,12 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		$item->setMetaDescription($itemTexts->ItemTexts->item[0]->MetaDescription);
 		
 		return $item;
-
+	}
+	
+	private function addDBMapping($plentyItemID, $magentoItemID){
+		$query = 'REPLACE INTO `plenty_magento_item_mapping` '.DBUtils::buildInsert(	array(	'plenty_item_id' => $plentyItemID, 'magento_item_id'	=>	$magentoItemID));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->replace($query, 'DBQueryResult');	
 	}
 	
 	private function checkLastUpdate(){
@@ -186,6 +203,16 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		DBQuery::getInstance()->replace($query);
 	}
 	
+	private function getMagentoCategoryID($plenty_category_id){
+		$query = 'SELECT `magento_id` FROM `plenty_magento_category_mapping`'.DBUtils::buildWhere( array( 'plenty_id' => $plenty_category_id));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
+		$ids = array();
+		while ($row = $result->fetchAssoc()){
+			$ids[$i] = $row["magento_id"];
+		}
+		return $ids;
+	}
 	
 
 }
