@@ -38,12 +38,12 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 	public function execute() {
 		$this->lastUpdateFrom = $this->checkLastUpdate();
 		$this->lastUpdateTo = time();
+		$newUpdate = false;
 
 		$response = $this->getPlentySoap()->GetCategoryPreview();
 		
 		$i = 0;
 		while($i < count($response->CategoriesPreview->item)){
-			echo $i;
 			if($response->CategoriesPreview->item[$i]->Name != NULL){
 				
 				$oPlentySoapRequest_GetCategories = new PlentySoapRequest_GetCategories();
@@ -57,40 +57,45 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 				$oPlentySoapRequest_GetCategories->GetCategories = $oArrayOfPlentysoaprequestobject_getcategories;
 				$response1 = $this->getPlentySoap()->GetCategories($oPlentySoapRequest_GetCategories);
 				
-				if($this->lastUpdateFrom < $response1->Categories->item[0]->LastUpdateTimestamp){
-					$magentoCatID = $this->createMagentoCategory($response1->Categories->item[$i], $name);
-					echo $magentoCatID;
+				if($response1->Categories->item[0]->LastUpdateTimestamp > $this->lastUpdateFrom){
+					$this->newUpdate = true;
+					if($this->categoryAlreadyExist($response1->Categories->item[0]->CategoryID)){
+						$magentoCatID = $this->createMagentoCategory($response1->Categories->item[0], $name, "update");
+					}else {
+						$magentoCatID = $this->createMagentoCategory($response1->Categories->item[0], $name, "neu");
+					}
 					$this->insertIDsIntoDB(
 							$name, 
 							$response1->Categories->item[0]->CategoryID, 
 							$magentoCatID, 
-							$response1->Categories->item[0]->ParentCategoryID );
+							$response1->Categories->item[0]->ParentCategoryID);
 				}
 			}
 			$i++;
 		}
 		
-		$j = 0;
-		while($j < count($response->CategoriesPreview->item)){
-			if($response->CategoriesPreview->item[$j]->Name != NULL){
-
-				$CategoryID = $response->CategoriesPreview->item[$j]->CategoryID;
-				
-				$magentoID = $this->getMagentoID($CategoryID);
-				$magentoParentID = $this->getMagentoParentID($CategoryID);
-				
-				if($magentoParentID != NULL){
-					$successfull = $this->moveMagentoCategory($magentoID ,$magentoParentID);
-					if($successfull){
-						$this->updateMagentoParentID($magentoID, $magentoParentID);
+		if($newUpdate){
+			$j = 0;
+			while($j < count($response->CategoriesPreview->item)){
+				if($response->CategoriesPreview->item[$j]->Name != NULL){
+			
+					$CategoryID = $response->CategoriesPreview->item[$j]->CategoryID;
+			
+					$magentoID = $this->getMagentoID($CategoryID);
+					$magentoParentID = $this->getMagentoParentID($CategoryID);
+			
+					if($magentoParentID != NULL){
+						$successfull = $this->moveMagentoCategory($magentoID ,$magentoParentID);
+						if($successfull){
+							$this->updateMagentoParentID($magentoID, $magentoParentID);
+						}
 					}
 				}
+				$j++;
 			}
-			$j++;
 		}
-
 		
-		//$this->setLastUpdate($this->lastUpdateTill);
+		$this->setLastUpdate($this->lastUpdateTo);
 	}
 	
 	private function moveMagentoCategory($magentoCategoryID ,$magentoParentID){
@@ -98,30 +103,50 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 		return $result;
 	}
 	
-	private function createMagentoCategory($item, $name){
-		$catID = self::$magentoClient->call(self::$magentoSession, 'catalog_category.create', array(2, array(
+	private function createMagentoCategory($item, $name, $status){
+		
+		$category = array(
 				'name' => $name,
 				'is_active' => 1,
-				'position' => 1,
-				'available_sort_by' => 'position',
-				'custom_design' => null,
-				'custom_apply_to_products' => null,
-				'custom_design_from' => null,
-				'custom_design_to' => null,
-				'custom_layout_update' => null,
-				'default_sort_by' => 'position',
-				'description' => 'Category description',
-				'display_mode' => null,
-				'is_anchor' => 0,
-				'landing_page' => null,
-				'meta_description' => 'Category meta description',
-				'meta_keywords' => 'Category meta keywords',
-				'meta_title' => 'Category meta title',
-				'page_layout' => 'two_columns_left',
-				'url_key' => 'url-key',
-				'include_in_menu' => 1,
-		)));
+    			'position' => 1,
+    			'available_sort_by' => 'position',
+   				'custom_design' => null,
+   				'custom_apply_to_products' => null,
+  				'custom_design_from' => null,
+    			'custom_design_to' => null,
+    			'custom_layout_update' => null,
+    			'default_sort_by' => 'position',
+    			'description' => 'Category description',
+    			'display_mode' => null,
+    			'is_anchor' => 0,
+    			'landing_page' => null,
+    			'meta_description' => 'Category meta description',
+    			'meta_keywords' => 'Category meta keywords',
+    			'meta_title' => 'Category meta title',
+    			'page_layout' => 'two_columns_left',
+    			'url_key' => 'url-key',
+    			'include_in_menu' => 1,
+		);
+
+		if($status == "neu"){
+			$catID = self::$magentoClient->call(self::$magentoSession, 'catalog_category.create', array(2, $category));
+		}else {
+			$catID = $this->getMagentoID($item->CategoryID);
+			self::$magentoClient->call(self::$magentoSession, 'catalog_category.update', array($catID, $category));
+		}
+		
 		return $catID;
+	}
+	
+	private function categoryAlreadyExist($plentyID){
+		$query = 'SELECT `magento_id` FROM `plenty_magento_category_mapping` WHERE `plenty_id` = '.$plentyID;
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
+		if($result->fetchAssoc() == NULL){
+			return false;
+		}else {
+			return true;
+		}
 	}
 	
 	private function updateMagentoParentID($magentoCategoryID ,$magentoParentID){
@@ -159,7 +184,7 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 	}
 	
 	private function setLastUpdate($lastUpdateTill){
-		$query = 'REPLACE INTO `plenty_last_itemsImages_update` '.DBUtils::buildInsert(	array(	'id' => 1, 'last_update'	=>	$this->lastUpdateTo));
+		$query = 'REPLACE INTO `plenty_last_category_update` '.DBUtils::buildInsert(	array(	'id' => 1, 'last_update'	=>	$lastUpdateTill));
 		$this->getLogger()->debug(__FUNCTION__.' '.$query);
 		DBQuery::getInstance()->replace($query);
 	}

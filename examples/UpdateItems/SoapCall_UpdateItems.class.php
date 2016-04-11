@@ -43,7 +43,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		try
 		{
 			$this->lastUpdateFrom = $this->checkLastUpdate();
-			$lastUpdateTill = time();//1459728000
+			$lastUpdateTill = time();
 			
 			$itemsBaseResponse = $this->getItemsBase($this->lastUpdateFrom, $lastUpdateTill);
 			
@@ -90,7 +90,6 @@ class SoapCall_UpdateItems extends PlentySoapCall
 					if($magentoItemID == 1)
 					$this->getLogger()->info(__FUNCTION__.':: Item Updated: ');
 				}
-				exit;
 			}
 		}
 	}

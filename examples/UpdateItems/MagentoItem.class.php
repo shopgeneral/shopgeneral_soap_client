@@ -114,7 +114,6 @@ class MagentoItem {
 	}
 	
 	public function setCategory($magento_category_id){
-		var_dump($magento_category_id);
 		$this->categories = $magento_category_id;
 	}
 	
