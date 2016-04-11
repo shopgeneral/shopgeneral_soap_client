@@ -58,6 +58,7 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 				$response1 = $this->getPlentySoap()->GetCategories($oPlentySoapRequest_GetCategories);
 				
 				if($response1->Categories->item[0]->LastUpdateTimestamp > $this->lastUpdateFrom){
+					var_dump($response1->Categories->item[0]);
 					$this->newUpdate = true;
 					if($this->categoryAlreadyExist($response1->Categories->item[0]->CategoryID)){
 						$magentoCatID = $this->createMagentoCategory($response1->Categories->item[0], $name, "update");
@@ -116,15 +117,8 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
     			'custom_design_to' => null,
     			'custom_layout_update' => null,
     			'default_sort_by' => 'position',
-    			'description' => 'Category description',
     			'display_mode' => null,
-    			'is_anchor' => 0,
     			'landing_page' => null,
-    			'meta_description' => 'Category meta description',
-    			'meta_keywords' => 'Category meta keywords',
-    			'meta_title' => 'Category meta title',
-    			'page_layout' => 'two_columns_left',
-    			'url_key' => 'url-key',
     			'include_in_menu' => 1,
 		);
 
