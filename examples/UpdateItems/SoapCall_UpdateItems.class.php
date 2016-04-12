@@ -71,7 +71,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			$this->onExceptionAction ( $e );
 		}
 		
- 		$this->setLastUpdate($lastUpdateTill);
+//  		$this->setLastUpdate($lastUpdateTill);
 	}
 		
 	private function parseResponse($response)
@@ -88,9 +88,8 @@ class SoapCall_UpdateItems extends PlentySoapCall
 					$this->addDBMapping($itemBase->ItemID, $magentoItemID);
 				}else {
 					if($magentoItemID == 1)
-					$this->getLogger()->info(__FUNCTION__.':: Item Updated: ');
+						$this->getLogger()->info(__FUNCTION__.':: Item Updated: ');
 				}
-				exit;
 			}
 		}
 	}
@@ -120,7 +119,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			
 		$oArrayOfPlentysoapobject_requestitems = new ArrayOfPlentysoapobject_requestitems();
 		$oArrayOfPlentysoapobject_requestitems->item = $oPlentySoapObject_RequestItems;
-			
+		
 		$oPlentySoapRequest_GetItemsTexts = new PlentySoapRequest_GetItemsTexts();
 		$oPlentySoapRequest_GetItemsTexts->ItemsList = $oArrayOfPlentysoapobject_requestitems;
 		
@@ -146,6 +145,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 	private function getCategoryIDArray($itemBase){
 		$fullPath = '';
 		$i = 0;
+		
 		while($i < count($itemBase->Categories->item)){
 			if($itemBase->Categories->item[$i]->ItemCategoryPath != NULL){
 				$fullPath = $fullPath.$itemBase->Categories->item[$i]->ItemCategoryPath.';';
@@ -154,11 +154,14 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			}
 			$i++;
 		}
+		
 		$fullPath = str_replace(';', ' ', $fullPath);
 		$test = explode(' ', $fullPath);
 		$test = array_unique($test);
 		$trunc_array = array_slice($test, 0, count($test)-1, true);
-		return $trunc_array;
+		var_dump($trunc_array);
+		$sortiert = array_values($trunc_array);
+		return $sortiert;
 	}
 	
 	private function convertToMagentoItem($itemBase){
@@ -237,8 +240,6 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		}
 		return $ids;
 	}
-	
-
 }
 
 ?>
