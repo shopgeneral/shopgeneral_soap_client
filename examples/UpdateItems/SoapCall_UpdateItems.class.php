@@ -12,6 +12,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 	private static $magentoSession = null;
 	
 	private $lastUpdateFrom = null;
+	private $lastUpdateTo = null;
 	
 	public function __construct()
 	{
@@ -43,15 +44,15 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		try
 		{
 			$this->lastUpdateFrom = $this->checkLastUpdate();
-			$lastUpdateTill = time();
+			$this->lastUpdateTo = time();
 			
-			$itemsBaseResponse = $this->getItemsBase($this->lastUpdateFrom, $lastUpdateTill);
+			$itemsBaseResponse = $this->getItemsBase($this->lastUpdateFrom, $this->lastUpdateTo);
 			
 			$totalPages = $itemsBaseResponse->Pages-1;
 			$i = 0;
 			while($i <= $totalPages){
 
-				$itemsBaseByPageResponse = $this->getItemsBaseByPage($this->lastUpdateFrom, $lastUpdateTill, $i);
+				$itemsBaseByPageResponse = $this->getItemsBaseByPage($this->lastUpdateFrom, $this->lastUpdateTo, $i);
 
 				if( $itemsBaseByPageResponse->Success == true )
 				{
@@ -71,7 +72,8 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			$this->onExceptionAction ( $e );
 		}
 		
-//  		$this->setLastUpdate($lastUpdateTill);
+	  	$this->setLastUpdate($this->lastUpdateTo);
+		self::$magentoClient->endSession(self::$magentoSession);
 	}
 		
 	private function parseResponse($response)

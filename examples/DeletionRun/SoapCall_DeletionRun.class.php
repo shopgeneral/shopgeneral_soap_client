@@ -24,7 +24,7 @@ class SoapCall_DeletionRun extends PlentySoapCall {
 		}
 		return self::$instance;
 	}
-	
+
 	private function initMagentoController() {
 		$magentoSoapClient = MagentoSoapClient::getInstance ();
 		$magentoSoapClient->doAuthentification ();
@@ -45,11 +45,40 @@ class SoapCall_DeletionRun extends PlentySoapCall {
 		
 		$response = $this->getPlentySoap()->GetDeleteLog($oPlentySoapRequest_GetDeleteLog);
 		
-		var_dump($response);
+		$i = 0;
+		while($i < count($response->DeleteLogList->item)){
+			$referenceType = $response->DeleteLogList->item[$i]->ReferenceType;
+			$id = $response->DeleteLogList->item[$i]->ReferenceValue;
+			
+			if($referenceType == 5){ # TYP: Artikel
+				$this->deleteItem($id);
+			}elseif($referenceType == 1){ # TYP: 
+				echo $response->DeleteLogList->item[$i]->ReferenceValue;
+			}
+			$i++;
+		}
 		
 		exit;
 		$this->setLastUpdate($this->lastUpdateTo);
-		exit;
+		self::$magentoClient->endSession(self::$magentoSession);
+	}
+	
+	private function deleteItem($id){
+		$result = false;
+		$magento_id = $this->getMagentoID($id);
+		if($magento_id != NULL){
+			$result = self::$magentoClient->call(self::$magentoSession, 'catalog_product.delete', $magento_id);
+		}
+		if($result){
+			$this->getLogger()->info(__FUNCTION__.':: Deleted Magento Item: '.$magento_id);
+		}
+	}
+	
+	private function getMagentoID($plentyID){
+		$query = 'SELECT `magento_id` FROM `plenty_magento_item_mapping`'.DBUtils::buildWhere( array( 'plenty_item_id' => $plentyID));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
+		return $result->fetchAssoc()["magento_item_id"];
 	}
 	
 	private function checkLastUpdate(){

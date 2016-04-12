@@ -32,6 +32,36 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 		self::$magentoClient = $magentoSoapClient->getSoapClient ();
 	}
 	
+	/*
+	 * (non-PHPdoc) @see PlentySoapCall::execute()
+	*/
+	public function execute() {
+		$this->lastUpdateFrom = $this->checkLastUpdate();
+		$this->lastUpdateTo = time();
+	
+		$imageItem = $this->getImages();
+	
+		$totalPages = $imageItem->Pages;
+	
+		$i = 0;
+		while($i < $totalPages){
+			$itemByPage = $this->getItemsImagesByPage($this->lastUpdateFrom, $this->lastUpdateTo, $i);
+	
+			$e = 0;
+			while($e < count($itemByPage->ItemsImages->item)){
+				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$i]->ItemID);
+				$this->getLogger()->info(__FUNCTION__.'::  Add Image for'.' Item: '.$sku);
+				$imageFile = $this->getImageFile($itemByPage->ItemsImages->item[$i]);
+				$this->sendImageCall($sku, $imageFile);
+				$e++;
+			}
+				
+			$i++;
+		}
+		$this->setLastUpdate($this->lastUpdateTo);
+		self::$magentoClient->endSession(self::$magentoSession);
+	}
+	
 	private function getImages() {
 		$oPlentySoapRequest_GetItemsImages = new PlentySoapRequest_GetItemsImages ();
 		$oPlentySoapRequest_GetItemsImages->LastUpdateFrom = $this->lastUpdateFrom;
@@ -83,35 +113,6 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 		}catch (Exception $e){
 			$this->getLogger()->info("::  Exception: ".$e->getMessage()." (skip)");
 		}
-	}
-	
-	/*
-	 * (non-PHPdoc) @see PlentySoapCall::execute()
-	 */
-	public function execute() {
-		$this->lastUpdateFrom = $this->checkLastUpdate();
-		$this->lastUpdateTo = time();
-		
-		$imageItem = $this->getImages();
-
-		$totalPages = $imageItem->Pages;
-		
-		$i = 0;
-		while($i < $totalPages){
-			$itemByPage = $this->getItemsImagesByPage($this->lastUpdateFrom, $this->lastUpdateTo, $i);
-
-			$e = 0;
-			while($e < count($itemByPage->ItemsImages->item)){
-				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$i]->ItemID);
-				$this->getLogger()->info(__FUNCTION__.'::  Add Image for'.' Item: '.$sku);
-				$imageFile = $this->getImageFile($itemByPage->ItemsImages->item[$i]);
-				$this->sendImageCall($sku, $imageFile);
-				$e++;
-			}
-			
-			$i++;
-		}
-		$this->setLastUpdate($this->lastUpdateTo);
 	}
 	
 	private function getItemsImagesByPage($lastUpdateFrom, $lastUpdateTill, $page){
