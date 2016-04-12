@@ -159,7 +159,6 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		$test = explode(' ', $fullPath);
 		$test = array_unique($test);
 		$trunc_array = array_slice($test, 0, count($test)-1, true);
-		var_dump($trunc_array);
 		$sortiert = array_values($trunc_array);
 		return $sortiert;
 	}

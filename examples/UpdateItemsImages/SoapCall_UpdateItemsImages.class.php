@@ -89,17 +89,17 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 	 * (non-PHPdoc) @see PlentySoapCall::execute()
 	 */
 	public function execute() {
-		$this->lastUpdateFrom = 0;//$this->checkLastUpdate();
+		$this->lastUpdateFrom = $this->checkLastUpdate();
 		$this->lastUpdateTo = time();
 		
 		$imageItem = $this->getImages();
+
+		$totalPages = $imageItem->Pages;
 		
-		$totalPages = $itemsBaseResponse->Pages-1;
 		$i = 0;
-		while($i <= $totalPages){
+		while($i < $totalPages){
 			$itemByPage = $this->getItemsImagesByPage($this->lastUpdateFrom, $this->lastUpdateTo, $i);
-			
-			exit;
+
 			$e = 0;
 			while($e < count($itemByPage->ItemsImages->item)){
 				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$i]->ItemID);
@@ -111,7 +111,7 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 			
 			$i++;
 		}
-		$this->setLastUpdate($this->lastUpdateTill);
+		$this->setLastUpdate($this->lastUpdateTo);
 	}
 	
 	private function getItemsImagesByPage($lastUpdateFrom, $lastUpdateTill, $page){
