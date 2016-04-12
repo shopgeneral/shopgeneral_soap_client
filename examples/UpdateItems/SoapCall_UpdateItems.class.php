@@ -71,7 +71,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 			$this->onExceptionAction ( $e );
 		}
 		
-// 		$this->setLastUpdate($lastUpdateTill);
+ 		$this->setLastUpdate($lastUpdateTill);
 	}
 		
 	private function parseResponse($response)
@@ -90,6 +90,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 					if($magentoItemID == 1)
 					$this->getLogger()->info(__FUNCTION__.':: Item Updated: ');
 				}
+				exit;
 			}
 		}
 	}
@@ -142,15 +143,35 @@ class SoapCall_UpdateItems extends PlentySoapCall
 		return $result;
 	}
 	
+	private function getCategoryIDArray($itemBase){
+		$fullPath = '';
+		$i = 0;
+		while($i < count($itemBase->Categories->item)){
+			if($itemBase->Categories->item[$i]->ItemCategoryPath != NULL){
+				$fullPath = $fullPath.$itemBase->Categories->item[$i]->ItemCategoryPath.';';
+			}else {
+				$fullPath = $fullPath.$itemBase->Categories->item[$i]->ItemCategoryID.';';
+			}
+			$i++;
+		}
+		$fullPath = str_replace(';', ' ', $fullPath);
+		$test = explode(' ', $fullPath);
+		$test = array_unique($test);
+		$trunc_array = array_slice($test, 0, count($test)-1, true);
+		return $trunc_array;
+	}
+	
 	private function convertToMagentoItem($itemBase){
 		
+		$idArr = $this->getCategoryIDArray($itemBase);
+ 		$magento_category_ids = $this->getMagentoCategoryID($idArr);
+
 		$itemTexts = $this->getItemTexts($itemBase->ItemID);
-		$magento_category_id = $this->getMagentoCategoryID($itemBase->Categories->item[0]->ItemCategoryID);
 		
 		$item = new MagentoItem();
 		$item->setSKU($itemBase->ItemNo);
 		$item->setName($itemTexts->ItemTexts->item[0]->Name);
-		$item->setCategory($magento_category_id);
+		$item->setCategory($magento_category_ids);
 		$item->setDescription($itemTexts->ItemTexts->item[0]->LongDescription);
 		$item->setShortDescription($itemTexts->ItemTexts->item[0]->MetaDescription); //$itemTexts->ItemTexts->item[0]->ShortDescription
 		$item->setWeight($itemBase->PriceSet->WeightInGramm);
@@ -203,12 +224,16 @@ class SoapCall_UpdateItems extends PlentySoapCall
 	}
 	
 	private function getMagentoCategoryID($plenty_category_id){
-		$query = 'SELECT `magento_id` FROM `plenty_magento_category_mapping`'.DBUtils::buildWhere( array( 'plenty_id' => $plenty_category_id));
-		$this->getLogger()->debug(__FUNCTION__.' '.$query);
-		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
 		$ids = array();
-		while ($row = $result->fetchAssoc()){
-			$ids[$i] = $row["magento_id"];
+		$i = 0;
+		while($i < count($plenty_category_id)){
+			$query = 'SELECT `magento_id` FROM `plenty_magento_category_mapping`'.DBUtils::buildWhere( array( 'plenty_id' => $plenty_category_id[$i]));
+			$this->getLogger()->debug(__FUNCTION__.' '.$query);
+			$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
+			while ($row = $result->fetchAssoc()){
+				$ids[count($ids)] = $row["magento_id"];
+			}
+			$i++;
 		}
 		return $ids;
 	}
