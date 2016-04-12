@@ -70,7 +70,7 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 					$sku,
 					array (
 							'file' => $file,
-							'label' => 'PlentyMarket Image',
+							'label' => 'PlentyMarkets Image',
 							'position' => '100',
 							'types' => array (
 									'thumbnail',
@@ -89,22 +89,38 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 	 * (non-PHPdoc) @see PlentySoapCall::execute()
 	 */
 	public function execute() {
-		
-		$this->lastUpdateFrom = $this->checkLastUpdate();
+		$this->lastUpdateFrom = 0;//$this->checkLastUpdate();
 		$this->lastUpdateTo = time();
 		
 		$imageItem = $this->getImages();
 		
+		$totalPages = $itemsBaseResponse->Pages-1;
 		$i = 0;
-		while($i < count($imageItem->ItemsImages->item)){
-			$sku = $this->getSKUfromItemID($imageItem->ItemsImages->item[$i]->ItemID);
-			$this->getLogger()->info(__FUNCTION__.'::  Add Image for'.' Item: '.$sku);
-			$imageFile = $this->getImageFile($imageItem->ItemsImages->item[$i]);
-			$this->sendImageCall($sku, $imageFile);
+		while($i <= $totalPages){
+			$itemByPage = $this->getItemsImagesByPage($this->lastUpdateFrom, $this->lastUpdateTo, $i);
+			
+			exit;
+			$e = 0;
+			while($e < count($itemByPage->ItemsImages->item)){
+				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$i]->ItemID);
+				$this->getLogger()->info(__FUNCTION__.'::  Add Image for'.' Item: '.$sku);
+				$imageFile = $this->getImageFile($itemByPage->ItemsImages->item[$i]);
+				$this->sendImageCall($sku, $imageFile);
+				$e++;
+			}
+			
 			$i++;
 		}
-		
-		//$this->setLastUpdate($this->lastUpdateTill);
+		$this->setLastUpdate($this->lastUpdateTill);
+	}
+	
+	private function getItemsImagesByPage($lastUpdateFrom, $lastUpdateTill, $page){
+		$oPlentySoapRequest_GetItemsImages = new PlentySoapRequest_GetItemsImages ();
+		$oPlentySoapRequest_GetItemsImages->LastUpdateFrom = $this->lastUpdateFrom;
+		$oPlentySoapRequest_GetItemsImages->LastUpdateTo = $this->lastUpdateTo;
+		$oPlentySoapRequest_GetItemsImages->Page = $page;
+		$response = $this->getPlentySoap()->GetItemsImages($oPlentySoapRequest_GetItemsImages);
+		return $response;
 	}
 	
 	private function checkLastUpdate(){
