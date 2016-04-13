@@ -5,6 +5,9 @@ require_once ROOT.'lib/soap/client/MagentoSoapClient.php';
 
 class SoapCall_DeletionRun extends PlentySoapCall {
 	
+	private static $_CATEGORY = 1;
+	private static $_ITEM = 5;
+	
 	private static $instance = null;
 	
 	private $lastUpdateFrom = null;
@@ -50,35 +53,73 @@ class SoapCall_DeletionRun extends PlentySoapCall {
 			$referenceType = $response->DeleteLogList->item[$i]->ReferenceType;
 			$id = $response->DeleteLogList->item[$i]->ReferenceValue;
 			
-			if($referenceType == 5){ # TYP: Artikel
+			if($referenceType == self::$_ITEM){
 				$this->deleteItem($id);
-			}elseif($referenceType == 1){ # TYP: 
-				echo $response->DeleteLogList->item[$i]->ReferenceValue;
+			}elseif($referenceType == self::$_CATEGORY){
+				$this->deleteCategory($id);
 			}
 			$i++;
 		}
-		
-		exit;
 		$this->setLastUpdate($this->lastUpdateTo);
 		self::$magentoClient->endSession(self::$magentoSession);
 	}
 	
-	private function deleteItem($id){
+	private function deleteItem($plenty_item_id){
 		$result = false;
-		$magento_id = $this->getMagentoID($id);
-		if($magento_id != NULL){
-			$result = self::$magentoClient->call(self::$magentoSession, 'catalog_product.delete', $magento_id);
+		$magento_item_id = $this->getMagentoItemID($plenty_item_id);
+		if($magento_item_id != NULL){
+			$result = self::$magentoClient->call(self::$magentoSession, 'catalog_product.delete', $magento_item_id);
 		}
-		if($result){
-			$this->getLogger()->info(__FUNCTION__.':: Deleted Magento Item: '.$magento_id);
+		if ($result) {
+			$this->getLogger ()->info ( __FUNCTION__ . ':: Deleted Magento Item: ' . $magento_item_id );
+			$this->deleteItemIdFromDB($plenty_item_id);
+		} else {
+			$this->getLogger ()->info ( __FUNCTION__ . ':: Magento Item ' . $magento_item_id . ' not exist (skip)' );
 		}
 	}
 	
-	private function getMagentoID($plentyID){
-		$query = 'SELECT `magento_id` FROM `plenty_magento_item_mapping`'.DBUtils::buildWhere( array( 'plenty_item_id' => $plentyID));
+	private function deleteCategory($plenty_category_id){
+		$result = false;
+		$magento_category_id = $this->getMagentoCategoryID($plenty_category_id);
+		if($magento_category_id != NULL){
+			try{
+				$result = self::$magentoClient->call(self::$magentoSession, 'catalog_category.delete', $magento_category_id);
+			}catch (Exception $e){
+				$this->getLogger ()->info ( __FUNCTION__ . ':: '.$e->getMessage());
+			}
+		}
+		if ($result) {
+			$this->getLogger ()->info ( __FUNCTION__ . ':: Deleted Magento Category: ' . $magento_category_id );
+			$this->deleteCategoryIdFromDB($plenty_category_id);
+		} else {
+			$this->getLogger ()->info ( __FUNCTION__ . ':: Magento Item ' . $magento_category_id . ' not exist (skip)' );
+		}
+	}
+	
+	private function getMagentoItemID($plenty_item_id){
+		$query = 'SELECT `magento_item_id` FROM `plenty_magento_item_mapping`'.DBUtils::buildWhere( array( 'plenty_item_id' => $plenty_item_id));
 		$this->getLogger()->debug(__FUNCTION__.' '.$query);
 		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
 		return $result->fetchAssoc()["magento_item_id"];
+	}
+	
+	private function getMagentoCategoryID($plenty_category_id){
+		$query = 'SELECT `magento_id` FROM `plenty_magento_category_mapping`'.DBUtils::buildWhere( array( 'plenty_id' => $plenty_category_id));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->select($query, 'DBQueryResult');
+		return $result->fetchAssoc()["magento_id"];
+	}
+	
+	private function deleteCategoryIdFromDB($plenty_category_id){
+		$query = 'DELETE FROM `plenty_magento_category_mapping`'.DBUtils::buildWhere( array( 'plenty_id' => $plenty_category_id));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->delete($query);
+	}
+	
+	private function deleteItemIdFromDB($plenty_item_id){
+		$query = 'DELETE FROM `plenty_magento_item_mapping`'.DBUtils::buildWhere( array( 'plenty_item_id' => $plenty_item_id));
+		$this->getLogger()->debug(__FUNCTION__.' '.$query);
+		$result = DBQuery::getInstance()->delete($query);
 	}
 	
 	private function checkLastUpdate(){

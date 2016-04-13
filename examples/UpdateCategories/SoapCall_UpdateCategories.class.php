@@ -38,8 +38,10 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 	public function execute() {
 		$this->lastUpdateFrom = $this->checkLastUpdate();
 		$this->lastUpdateTo = time();
+		
 		$newUpdate = false;
-
+		$updatedItems = array();
+		
 		$response = $this->getPlentySoap()->GetCategoryPreview();
 		
 		$i = 0;
@@ -51,15 +53,14 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 				$o->CategoryID = $response->CategoriesPreview->item[$i]->CategoryID;
 				
 				$name = $response->CategoriesPreview->item[$i]->Name;
-				
 				$oArrayOfPlentysoaprequestobject_getcategories = new ArrayOfPlentysoaprequestobject_getcategories();
 				$oArrayOfPlentysoaprequestobject_getcategories->item = $o;
 				$oPlentySoapRequest_GetCategories->GetCategories = $oArrayOfPlentysoaprequestobject_getcategories;
 				$response1 = $this->getPlentySoap()->GetCategories($oPlentySoapRequest_GetCategories);
 				
 				if($response1->Categories->item[0]->LastUpdateTimestamp > $this->lastUpdateFrom){
-					var_dump($response1->Categories->item[0]);
-					$this->newUpdate = true;
+					$updatedItems[$i] = $response1->Categories->item[0];
+					$newUpdate = true;
 					if($this->categoryAlreadyExist($response1->Categories->item[0]->CategoryID)){
 						$magentoCatID = $this->createMagentoCategory($response1->Categories->item[0], $name, "update");
 					}else {
@@ -75,27 +76,25 @@ class SoapCall_UpdateCategories extends PlentySoapCall {
 			$i++;
 		}
 		
+		$updatedItems = array_values($updatedItems);
+		
 		if($newUpdate){
 			$j = 0;
-			while($j < count($response->CategoriesPreview->item)){
-				if($response->CategoriesPreview->item[$j]->Name != NULL){
+			while($j < count($updatedItems)){
+					$category_id = $updatedItems[$j]->CategoryID;
 			
-					$CategoryID = $response->CategoriesPreview->item[$j]->CategoryID;
+					$magento_id = $this->getMagentoID($category_id);
+					$magento_parent_id = $this->getMagentoParentID($category_id);
 			
-					$magentoID = $this->getMagentoID($CategoryID);
-					$magentoParentID = $this->getMagentoParentID($CategoryID);
-			
-					if($magentoParentID != NULL){
-						$successfull = $this->moveMagentoCategory($magentoID ,$magentoParentID);
+					if($magento_parent_id != NULL){
+						$successfull = $this->moveMagentoCategory($magento_id ,$magento_parent_id);
 						if($successfull){
-							$this->updateMagentoParentID($magentoID, $magentoParentID);
+							$this->updateMagentoParentID($magento_id, $magento_parent_id);
 						}
 					}
-				}
 				$j++;
 			}
 		}
-		
 		$this->setLastUpdate($this->lastUpdateTo);
 	}
 	

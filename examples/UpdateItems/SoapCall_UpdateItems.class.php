@@ -211,7 +211,7 @@ class SoapCall_UpdateItems extends PlentySoapCall
 	private function addDBMapping($plentyItemID, $magentoItemID){
 		$query = 'REPLACE INTO `plenty_magento_item_mapping` '.DBUtils::buildInsert(	array(	'plenty_item_id' => $plentyItemID, 'magento_item_id'	=>	$magentoItemID));
 		$this->getLogger()->debug(__FUNCTION__.' '.$query);
-		$result = DBQuery::getInstance()->replace($query, 'DBQueryResult');	
+		$result = DBQuery::getInstance()->replace($query, 'DBQueryResult');
 	}
 	
 	private function checkLastUpdate(){
