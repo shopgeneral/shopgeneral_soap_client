@@ -49,9 +49,12 @@ class SoapCall_UpdateItemsImages extends PlentySoapCall {
 	
 			$e = 0;
 			while($e < count($itemByPage->ItemsImages->item)){
-				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$i]->ItemID);
+				var_dump($itemByPage->ItemsImages->item[$e]->Names);
+				
+				exit;
+				$sku = $this->getSKUfromItemID($itemByPage->ItemsImages->item[$e]->ItemID);
 				$this->getLogger()->info(__FUNCTION__.'::  Add Image for'.' Item: '.$sku);
-				$imageFile = $this->getImageFile($itemByPage->ItemsImages->item[$i]);
+				$imageFile = $this->getImageFile($itemByPage->ItemsImages->item[$e]);
 				$this->sendImageCall($sku, $imageFile);
 				$e++;
 			}

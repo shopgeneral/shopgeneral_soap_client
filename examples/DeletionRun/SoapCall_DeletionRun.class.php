@@ -38,7 +38,7 @@ class SoapCall_DeletionRun extends PlentySoapCall {
 	/*
 	 * (non-PHPdoc) @see PlentySoapCall::execute()
 	 */
-	public function execute() {
+	public function execute() {		
 		$this->lastUpdateFrom = $this->checkLastUpdate();
 		$this->lastUpdateTo = time();
 		
@@ -62,6 +62,11 @@ class SoapCall_DeletionRun extends PlentySoapCall {
 		}
 		$this->setLastUpdate($this->lastUpdateTo);
 		self::$magentoClient->endSession(self::$magentoSession);
+	}
+	
+	private function deleteImage($plenty_item_id){
+		$magento_item_id = $this->getMagentoItemID($plenty_item_id);
+		$result = self::$magentoClient->call(self::$magentoSession, 'catalog_product_attribute_media.remove', array('product' => $magento_item_id, 'file' => '/i/m/image_344.jpg'));
 	}
 	
 	private function deleteItem($plenty_item_id){
